@@ -6,6 +6,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 export default function Comidas() {
   const [comidas, setComidas] = useState([]);
+  const [comidasOriginales, setComidasOriginales] = useState([]);
   const [form, setForm] = useState({ nombre: "", precio: "" });
   const [modalVisible, setModalVisible] = useState(false);
   const [editId, setEditId] = useState(null);
@@ -19,10 +20,16 @@ export default function Comidas() {
     try {
       const res = await axios.get("http://localhost:3001/api/comidas");
       setComidas(res.data);
+      setComidasOriginales(res.data); // Guardar las comidas originales para restaurar al buscar
+      setError(null); // Limpiar errores al cargar comidas
     } catch (error) {
-      setError("Error al cargar comidas. Por favor, inténtelo de nuevo más tarde.");
+      setError(
+        "Error al cargar comidas. Por favor, inténtelo de nuevo más tarde."
+      );
       console.error("Error al cargar comidas:", error);
-      toast.error("Error al cargar comidas. Por favor, inténtelo de nuevo más tarde.");
+      toast.error(
+        "Error al cargar comidas. Por favor, inténtelo de nuevo más tarde."
+      );
     }
   };
 
@@ -31,7 +38,6 @@ export default function Comidas() {
     setEditId(null);
     setModalVisible(true);
     setError(null); // Limpiar errores al abrir el modal
-
   };
 
   const abrirModalParaEditar = (comida) => {
@@ -52,7 +58,6 @@ export default function Comidas() {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
     setError(null); // Limpiar errores al cambiar el formulario
-
   };
 
   const handleSubmit = async () => {
@@ -60,20 +65,20 @@ export default function Comidas() {
       if (editId) {
         await axios.put(`http://localhost:3001/api/comidas/${editId}`, form);
         toast.success("Comida actualizada correctamente");
-      } 
-      else {
+      } else {
         await axios.post("http://localhost:3001/api/comidas", form);
         toast.success("Comida agregada correctamente");
-
-
       }
       cargarComidas();
       setForm({ nombre: "", precio: "" });
     } catch (error) {
-
       console.error("Error al guardar comida:", error);
-      setError("Error al guardar comida. Por favor, inténtelo de nuevo más tarde.");
-      toast.error("Error al guardar comida. Por favor, inténtelo de nuevo más tarde.");
+      setError(
+        "Error al guardar comida. Por favor, inténtelo de nuevo más tarde."
+      );
+      toast.error(
+        "Error al guardar comida. Por favor, inténtelo de nuevo más tarde."
+      );
     }
   };
 
@@ -84,15 +89,37 @@ export default function Comidas() {
       cargarComidas();
     } catch (error) {
       console.error("Error al eliminar comida:", error);
-      setError("Error al eliminar comida. Por favor, inténtelo de nuevo más tarde.");
-      toast.error("Error al eliminar comida. Por favor, inténtelo de nuevo más tarde.");
+      setError(
+        "Error al eliminar comida. Por favor, inténtelo de nuevo más tarde."
+      );
+      toast.error(
+        "Error al eliminar comida. Por favor, inténtelo de nuevo más tarde."
+      );
     }
   };
 
   return (
     <div>
-      <h1>Gestión de Comidas</h1>
+      <h2>GESTION DE COMIDAS</h2>
       <button onClick={abrirModalParaCrear}>Agregar comida</button>
+
+      <input
+        className="search-input"
+        type="text"
+        placeholder="Buscar comida por nombre"
+        onChange={(e) => {
+          const searchTerm = e.target.value.toLowerCase();
+          if (searchTerm === "") {
+            setComidas(comidasOriginales); // restaurar todo si está vacío
+          } else {
+            const comidasFiltradas = comidasOriginales.filter((comida) =>
+              comida.nombre.toLowerCase().includes(searchTerm)
+            );
+            setComidas(comidasFiltradas);
+          }
+          setError(null); // Limpiar errores al buscar
+        }}
+      />
 
       <table>
         <thead>
@@ -106,12 +133,16 @@ export default function Comidas() {
         <tbody>
           {comidas.map((comida) => (
             <tr key={comida.idComida}>
-              <td>{comida.idComida}</td>
-              <td>{comida.nombre}</td>
-              <td>{"$"+ comida.precio}</td>
-              <td>
-                <button onClick={() => abrirModalParaEditar(comida)}>Editar</button>
-                <button onClick={() => handleDelete(comida.idComida)}>Eliminar</button>
+              <td data-label="ID">{comida.idComida}</td>
+              <td data-label="Nombre">{comida.nombre}</td>
+              <td data-label="Precio">${comida.precio}</td>
+              <td data-label="Acciones">
+                <button onClick={() => abrirModalParaEditar(comida)}>
+                  Editar
+                </button>
+                <button onClick={() => handleDelete(comida.idComida)}>
+                  Eliminar
+                </button>
               </td>
             </tr>
           ))}
@@ -119,29 +150,43 @@ export default function Comidas() {
       </table>
 
       {modalVisible && (
-        <div style={{ border: "1px solid gray", padding: 10, marginTop: 20 }}>
-          <h2>{editId ? "Editar Comida" : "Agregar Comida"}</h2>
-          <input
-            type="text"
-            name="nombre"
-            placeholder="Nombre"
-            value={form.nombre}
-            onChange={handleChange}
-          />
-          <input
-            type="number"
-            name="precio"
-            placeholder="Precio"
-            value={form.precio}
-            onChange={handleChange}
-          />
-          <button onClick={handleSubmit}>
-            {editId ? "Actualizar" : "Guardar"}
-          </button>
-          <button onClick={cerrarModal}>Cancelar</button>
+        <div className="modal-overlay">
+          {/* Evitar que el click en el modal cierre el modal */}
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h3>{editId ? "Editar Comida" : "Agregar Nueva Comida"}</h3>
+
+            <label>Nombre</label>
+            <input
+              type="text"
+              name="nombre"
+              value={form.nombre}
+              onChange={handleChange}
+              placeholder="Ej: Milanesa con papas"
+            />
+
+            <label>Precio</label>
+            <input
+              type="number"
+              name="precio"
+              value={form.precio}
+              onChange={handleChange}
+              placeholder="Ej: 1200"
+              min="0"
+            />
+
+            {error && <p className="label-error">{error}</p>}
+
+            <div style={{ marginTop: "16px" }}>
+              <button onClick={handleSubmit}>
+                {editId ? "Actualizar" : "Guardar"}
+              </button>
+              <button onClick={cerrarModal}>Cancelar</button>
+            </div>
+          </div>
         </div>
       )}
-        <ToastContainer position="top-right" autoClose={3000} />
+
+      <ToastContainer position="bottom-right" />
     </div>
   );
 }

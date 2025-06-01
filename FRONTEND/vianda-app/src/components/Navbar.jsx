@@ -1,35 +1,32 @@
-
-import React from 'react';
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import tuviandaLogo from '../assets/tu-vianda.jpeg';
 
-export default function Navbar (){
+
+export default function Navbar() {
+    const [isOpen, setIsOpen] = useState(false);
+
+    const toggleNavbar = () => setIsOpen(!isOpen);
+
     return (
-        <nav>
-            <div>
-                <a href="/">Tu Vianda</a>
-                <button type="button">
-                    <span></span>
+        <nav className="navbar">
+            <div className="navbar-container">
+                <Link to="/" className="navbar-logo">
+                    <img src={tuviandaLogo} alt="Logo de Tu Vianda" className="navbar-logo-img" />
+                </Link>
+                <button type="button" className="navbar-toggle" onClick={toggleNavbar}>
+                    <span className="navbar-toggle-icon"></span>
                 </button>
-                <div>
-                    <ul>
-                        <li>
-                            <a href="/">Venta</a>
-                        </li>
-                        <li>
-                            <a href="/comidas">Comidas</a>
-                        </li>
-                        <li>
-                            <a href="/clientes">Clientes</a>
-                        </li>
-                        <li>
-                            <a href="/pedidos">Pedidos</a>
-                        </li>
-                        <li>
-                            <a href="/historial-ventas">Historial de Ventas</a>
-                        </li>
+                <div className={`navbar-links ${isOpen ? 'active' : ''}`}>
+                    <ul className="navbar-list">
+                        <li><Link to="/" className="navbar-link">Venta</Link></li>
+                        <li><Link to="/comidas" className="navbar-link">Comidas</Link></li>
+                        <li><Link to="/clientes" className="navbar-link">Clientes</Link></li>
+                        <li><Link to="/pedidos" className="navbar-link">Pedidos</Link></li>
+                        <li><Link to="/historial-ventas" className="navbar-link">Historial de Ventas</Link></li>
                     </ul>
                 </div>
             </div>
         </nav>
-    )
+    );
 }

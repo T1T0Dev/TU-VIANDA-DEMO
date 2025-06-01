@@ -1,28 +1,42 @@
 import db from "../db.js";
 
 export const getVentasDetalles = async (req, res) => {
+  const { fecha } = req.query;
+
   try {
-    const [rows] = await db.query(`
-    SELECT
-    v.idventa        AS id_venta,
-    v.fecha_venta    AS fecha_venta,
-    p.idpedido       AS numero_pedido,
-    cl.nombre        AS cliente,
-    SUM(dp.cantidad * dp.precio_unitario) AS total_venta
-  FROM ventas v
-  JOIN pedidos p ON v.idpedido = p.idpedido
-  JOIN clientes cl ON p.idcliente = cl.idcliente
-  JOIN detalle_pedidos dp ON p.idpedido = dp.idpedido
-  GROUP BY v.idventa, v.fecha_venta, p.idpedido, cl.nombre
-  ORDER BY v.fecha_venta DESC;
-  
-    `);
+    let query = `
+      SELECT
+        v.idventa        AS id_venta,
+        v.fecha_venta    AS fecha_venta,
+        p.idpedido       AS numero_pedido,
+        cl.nombre        AS cliente,
+        ROUND(SUM(dp.cantidad * dp.precio_unitario)) AS total_venta
+      FROM ventas v
+      JOIN pedidos p ON v.idpedido = p.idpedido
+      JOIN clientes cl ON p.idcliente = cl.idcliente
+      JOIN detalle_pedidos dp ON p.idpedido = dp.idpedido
+    `;
+
+    const params = [];
+
+    if (fecha) {
+      query += ` WHERE DATE(v.fecha_venta) = ?`;
+      params.push(fecha);
+    }
+
+    query += `
+      GROUP BY v.idventa, v.fecha_venta, p.idpedido, cl.nombre
+      ORDER BY v.fecha_venta DESC
+    `;
+
+    const [rows] = await db.query(query, params);
     res.json(rows);
   } catch (error) {
     console.error("Error al obtener detalle de ventas:", error);
     res.status(500).json({ message: "Error al obtener detalle de ventas" });
   }
 };
+
 
 export const addVentasDetalles = async (req, res) => {
     const { idpedido } = req.body;

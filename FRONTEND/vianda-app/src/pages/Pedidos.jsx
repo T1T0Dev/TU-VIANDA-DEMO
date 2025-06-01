@@ -6,6 +6,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 export default function Pedidos() {
   const [pedidoDetalles, setPedidoDetalles] = useState([]);
+  const [filtroEstado, setFiltroEstado] = useState("pendiente");
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -41,10 +42,23 @@ export default function Pedidos() {
     }
   };
 
+  const pedidosFiltrados = pedidoDetalles.filter(
+  (pedido) => pedido.estado === filtroEstado
+  );
+
+
   return (
     <div>
-      <h1>Pedidos</h1>
+      <h2>PEDIDOS</h2>
       {error && <p style={{ color: "red" }}>{error}</p>}
+
+      <button
+        onClick={() =>
+          setFiltroEstado(filtroEstado === "pendiente" ? "entregado" : "pendiente")
+        }
+      >
+        {filtroEstado === "pendiente" ? "VER ENTREGADOS" : "VER PENDIENTES"}
+      </button>
 
       <table>
         <thead>
@@ -61,17 +75,17 @@ export default function Pedidos() {
           </tr>
         </thead>
         <tbody>
-          {pedidoDetalles.map((fila) => (
+          {pedidosFiltrados.map((fila) => (
             <tr key={`${fila.numero_pedido}-${fila.comida}`}>
-              <td>{fila.numero_pedido}</td>
-              <td>{fila.cliente}</td>
-              <td>{fila.comida}</td>
-              <td>{"$"+fila.preciounitario}</td>
-              <td>{fila.cantidad}</td>
-              <td>${fila.subtotal}</td>
-              <td>{fila.estado}</td>
-              <td>{new Date(fila.fecha_pedido).toLocaleString()}</td>
-              <td>
+              <td data-label="Pedido #">{fila.numero_pedido}</td>
+              <td data-label="Cliente">{fila.cliente}</td>
+              <td data-label="Comida">{fila.comida}</td>
+              <td data-label="Precio Unitario">{"$"+fila.preciounitario}</td>
+              <td data-label="Cantidad">{fila.cantidad}</td>
+              <td data-label="Subtotal">${fila.subtotal}</td>
+              <td data-label="Estado">{fila.estado}</td>
+              <td data-label="Fecha de Pedido">{new Date(fila.fecha_pedido).toLocaleString()}</td>
+              <td data-label="Acciones">
                 {fila.estado === "pendiente" && (
                   <button
                     onClick={() => marcarEntregado(fila.numero_pedido)}

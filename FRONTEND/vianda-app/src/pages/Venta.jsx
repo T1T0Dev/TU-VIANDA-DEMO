@@ -126,82 +126,80 @@ export default function Venta() {
   // La magia está acá
   // Dentro de tu componente Venta.jsx...
 
-const enviarPedido = async () => {
-  setLoading(true);
+  const enviarPedido = async () => {
+    setLoading(true);
 
-  try {
-    let idClienteFinal = clienteSeleccionado;
+    try {
+      let idClienteFinal = clienteSeleccionado;
 
-    // 1) Si no es cliente existente, lo creo primero y obtengo su id.
-    if (!clienteExistente) {
-      if (!nuevoCliente.nombre.trim()) {
-        toast.error("El nombre del cliente es obligatorio");
+      // 1) Si no es cliente existente, lo creo primero y obtengo su id.
+      if (!clienteExistente) {
+        if (!nuevoCliente.nombre.trim()) {
+          toast.error("El nombre del cliente es obligatorio");
+          setLoading(false);
+          return;
+        }
+
+        const resCliente = await axios.post(
+          "http://localhost:3001/api/clientes",
+          nuevoCliente
+        );
+        idClienteFinal = resCliente.data.idcliente;
+        setClientes((prev) => [...prev, resCliente.data]);
+        setClienteSeleccionado(idClienteFinal);
+        setClienteExistente(true);
+      }
+
+      // 2) Verifico que ya tenga un idCliente antes de continuar.
+      if (!idClienteFinal) {
+        toast.error("No se pudo determinar el cliente para el pedido");
         setLoading(false);
         return;
       }
 
-      const resCliente = await axios.post(
-        "http://localhost:3001/api/clientes",
-        nuevoCliente
+      // 3) Creo el pedido y guardo el idpedido que devuelve el backend.
+      const resPedido = await axios.post("http://localhost:3001/api/pedidos", {
+        idcliente: idClienteFinal,
+        incluye_envio: incluyeEnvio,
+      });
+
+      const idpedido = resPedido.data.idpedido;
+
+      // 4) Ahora recorro cada ítem del carrito y hago un POST separado a detalle_pedidos.
+      //    Usamos Promise.all para enviarlos en paralelo y esperar a que todos terminen.
+      await Promise.all(
+        venta.map((item) =>
+          axios.post("http://localhost:3001/api/detallepedidos", {
+            idpedido,
+            idcomida: item.idComida,
+            cantidad: item.cantidad,
+            precio_unitario: item.precio,
+          })
+        )
       );
-      idClienteFinal = resCliente.data.idcliente;
-      setClientes((prev) => [...prev, resCliente.data]);
-      setClienteSeleccionado(idClienteFinal);
-      setClienteExistente(true);
-    }
 
-    // 2) Verifico que ya tenga un idCliente antes de continuar.
-    if (!idClienteFinal) {
-      toast.error("No se pudo determinar el cliente para el pedido");
+      toast.success("Pedido enviado con éxito");
+
+      // 5) Limpio todo el estado para volver al inicio
+      setVenta([]);
+      setForm({ idComida: "", cantidad: 1 });
+      setMostrarModal(false);
+      setNuevoCliente({ nombre: "", telefono: "", direccion: "" });
+      setIncluyeEnvio(false);
+      setClienteSeleccionado(null);
+    } catch (error) {
+      console.error("Error al enviar pedido:", error);
+      toast.error("Error al enviar el pedido. Revisá la consola.");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    // 3) Creo el pedido y guardo el idpedido que devuelve el backend.
-    const resPedido = await axios.post("http://localhost:3001/api/pedidos", {
-      idcliente: idClienteFinal,
-      incluye_envio: incluyeEnvio,
-    });
-    const idpedido = resPedido.data.idpedido;
-
-    // 4) Ahora recorro cada ítem del carrito y hago un POST separado a detalle_pedidos.
-    //    Usamos Promise.all para enviarlos en paralelo y esperar a que todos terminen.
-    await Promise.all(
-      venta.map((item) =>
-        axios.post("http://localhost:3001/api/detalle_pedidos", {
-          idpedido,
-          idcomida: item.idComida,
-          cantidad: item.cantidad,
-          precio_unitario: item.precio,
-        })
-      )
-    );
-
-    toast.success("Pedido enviado con éxito");
-
-    // 5) Limpio todo el estado para volver al inicio
-    setVenta([]);
-    setForm({ idComida: "", cantidad: 1 });
-    setMostrarModal(false);
-    setNuevoCliente({ nombre: "", telefono: "", direccion: "" });
-    setIncluyeEnvio(false);
-    setClienteSeleccionado(null);
-  } catch (error) {
-    console.error("Error al enviar pedido:", error);
-    toast.error("Error al enviar el pedido. Revisá la consola.");
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-  
+  };
 
   return (
     <div>
-      <h1>Realizar Venta</h1>
+      <h1>VENTAS</h1>
 
-      <div style={{ marginBottom: "10px" }}>
+      <div>
         <select name="idComida" value={form.idComida} onChange={handleChange}>
           <option value="" disabled>
             Seleccioná una comida
@@ -225,6 +223,8 @@ const enviarPedido = async () => {
         <button onClick={agregarItem}>Agregar</button>
         <button onClick={() => setVenta([])}>Vaciar Carrito</button>
         <button onClick={() => setMostrarModal(true)}>Enviar Pedido</button>
+        <h2 className="total-venta">Total: ${total}</h2>
+
       </div>
 
       <table>
@@ -240,10 +240,10 @@ const enviarPedido = async () => {
         <tbody>
           {venta.map((item, index) => (
             <tr key={index}>
-              <td>{item.nombre}</td>
-              <td>{item.precio}</td>
-              <td>{item.cantidad}</td>
-              <td>{item.subtotal}</td>
+              <td data-label="Comida">{item.nombre}</td>
+              <td data-label="Precio">{"$"+ item.precio}</td>
+              <td data-label="Cantidad">{item.cantidad}</td>
+              <td data-label="Subtotal">{item.subtotal}</td>
               <td>
                 <button onClick={() => eliminarItem(index)}>Eliminar</button>
               </td>
@@ -252,91 +252,100 @@ const enviarPedido = async () => {
         </tbody>
       </table>
 
-      <h2>Total: ${total}</h2>
 
       {mostrarModal && (
-        <div style={{ border: "1px solid gray", padding: 10, marginTop: 20 }}>
-          <h2>Enviar Pedido</h2>
-          <label>
-            Cliente existente:
-            <input
-              type="checkbox"
-              checked={clienteExistente}
-              onChange={(e) => setClienteExistente(e.target.checked)}
-            />
-          </label>
-
-          {clienteExistente ? (
-            <div>
-              <select
-                value={clienteSeleccionado || ""}
-                onChange={(e) => setClienteSeleccionado(e.target.value)}
-                disabled={loading}
-              >
-                <option value="" disabled>
-                  Selecciona un cliente
-                </option>
-                {clientes.map((c) => (
-                  <option key={c.idcliente} value={c.idcliente}>
-                    {c.nombre}
+        <div className="modal-overlay">
+          <div className="modal">
+            <h2>Enviar Pedido</h2>
+            <label className="label-switch">
+              Cliente existente:
+              <input
+                type="checkbox"
+                checked={clienteExistente}
+                onChange={(e) => setClienteExistente(e.target.checked)}
+                className="input-switch"
+              />
+              <span className="custom-switch"></span>
+            </label>
+            {clienteExistente ? (
+              <div>
+                <select
+                  value={clienteSeleccionado || ""}
+                  onChange={(e) => setClienteSeleccionado(e.target.value)}
+                  disabled={loading}
+                >
+                  <option value="" disabled>
+                    Selecciona un cliente
                   </option>
-                ))}
-              </select>
-              <button onClick={enviarPedido} disabled={loading}>
-                {loading ? "Enviando..." : "Confirmar Pedido"}
-              </button>
-              <button onClick={() => setMostrarModal(false)} disabled={loading}>
-                Cancelar
-              </button>
-              <label>
-                Incluye envío:
+                  {clientes.map((c) => (
+                    <option key={c.idcliente} value={c.idcliente}>
+                      {c.nombre}
+                    </option>
+                  ))}
+                </select>
+                <button onClick={enviarPedido} disabled={loading}>
+                  {loading ? "Enviando..." : "Confirmar Pedido"}
+                </button>
+                <button
+                  onClick={() => setMostrarModal(false)}
+                  disabled={loading}
+                >
+                  Cancelar
+                </button>
+                <label className="label-switch">
+                  Incluye envío:
+                  <input
+                    type="checkbox"
+                    checked={incluyeEnvio}
+                    onChange={(e) => setIncluyeEnvio(e.target.checked)}
+                    disabled={loading}
+                    className="input-switch"
+                  />
+                  <span className="custom-switch"></span>
+                </label>
+              </div>
+            ) : (
+              <div>
                 <input
-                  type="checkbox"
-                  checked={incluyeEnvio}
-                  onChange={(e) => setIncluyeEnvio(e.target.checked)}
+                  type="text"
+                  placeholder="Nombre del Cliente"
+                  value={nuevoCliente.nombre}
+                  onChange={(e) =>
+                    setNuevoCliente({ ...nuevoCliente, nombre: e.target.value })
+                  }
                   disabled={loading}
                 />
-              </label>
-            </div>
-          ) : (
-            <div>
-              <input
-                type="text"
-                placeholder="Nombre del Cliente"
-                value={nuevoCliente.nombre}
-                onChange={(e) =>
-                  setNuevoCliente({ ...nuevoCliente, nombre: e.target.value })
-                }
-                disabled={loading}
-              />
-              <input
-                type="text"
-                placeholder="Teléfono"
-                value={nuevoCliente.telefono}
-                onChange={(e) =>
-                  setNuevoCliente({ ...nuevoCliente, telefono: e.target.value })
-                }
-                disabled={loading}
-              />
-              <input
-                type="text"
-                placeholder="Dirección"
-                value={nuevoCliente.direccion}
-                onChange={(e) =>
-                  setNuevoCliente({
-                    ...nuevoCliente,
-                    direccion: e.target.value,
-                  })
-                }
-                disabled={loading}
-              />
-             
-              <button onClick={createClient}>Crear cliente</button>
-            </div>
-          )}
+                <input
+                  type="text"
+                  placeholder="Teléfono"
+                  value={nuevoCliente.telefono}
+                  onChange={(e) =>
+                    setNuevoCliente({
+                      ...nuevoCliente,
+                      telefono: e.target.value,
+                    })
+                  }
+                  disabled={loading}
+                />
+                <input
+                  type="text"
+                  placeholder="Dirección"
+                  value={nuevoCliente.direccion}
+                  onChange={(e) =>
+                    setNuevoCliente({
+                      ...nuevoCliente,
+                      direccion: e.target.value,
+                    })
+                  }
+                  disabled={loading}
+                />
+                <button onClick={createClient}>Crear cliente</button>
+              </div>
+            )}
+          </div>
         </div>
       )}
-       <ToastContainer position="top-right" autoClose={3000} />
+      <ToastContainer position="top-right" autoClose={3000} />
     </div>
   );
 }

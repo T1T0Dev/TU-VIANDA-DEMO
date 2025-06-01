@@ -5,6 +5,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 export default function Clientes() {
   const [clientes, setClientes] = useState([]);
+  const [clientesOriginales, setClientesOriginales] = useState([]);
   const [form, setForm] = useState({ nombre: "", telefono: "", direccion: "" });
   const [modalVisible, setModalVisible] = useState(false);
   const [editId, setEditId] = useState(null);
@@ -18,6 +19,8 @@ export default function Clientes() {
     try {
       const res = await axios.get("http://localhost:3001/api/clientes");
       setClientes(res.data);
+      setClientesOriginales(res.data); // Guardar los clientes originales para restaurar al buscar
+      setError(null); // Limpiar errores al cargar clientes
     } catch (error) {
       // Manejo de errores al cargar clientes
       setError(
@@ -102,36 +105,63 @@ export default function Clientes() {
 
   return (
     <div>
-      <h2>Clientes</h2>
+      <h2>CLIENTES</h2>
       <button onClick={abrirModalParaCrear}>Agregar Cliente</button>
+      <input
+        className="search-input"
+        type="text"
+        placeholder="Buscar cliente por nombre"
+        onChange={(e) => {
+          const searchTerm = e.target.value.toLowerCase();
+
+          if (searchTerm === "") {
+            setClientes(clientesOriginales); // Restaurar todo
+            setError(null);
+          } else {
+            const filteredClientes = clientesOriginales.filter((cliente) =>
+              cliente.nombre.toLowerCase().includes(searchTerm)
+            );
+            setClientes(filteredClientes);
+
+            if (filteredClientes.length === 0) {
+              setError("No se encontraron clientes con ese nombre.");
+            } else {
+              setError(null);
+            }
+          }
+        }}
+      />
+
       {modalVisible && (
-        <div className="modal">
-          <h2>{editId ? "Editar Cliente" : "Agregar Cliente"}</h2>
-          <input
-            type="text"
-            name="nombre"
-            placeholder="Nombre"
-            value={form.nombre}
-            onChange={handleChange}
-          />
-          <input
-            type="text"
-            name="telefono"
-            placeholder="Teléfono"
-            value={form.telefono}
-            onChange={handleChange}
-          />
-          <input
-            type="text"
-            name="direccion"
-            placeholder="Dirección"
-            value={form.direccion}
-            onChange={handleChange}
-          />
-          <button onClick={handleSubmit}>
-            {editId ? "Actualizar" : "Crear"}
-          </button>
-          <button onClick={cerrarModal}>Cerrar</button>
+        <div className="modal-overlay">
+          <div className="modal">
+            <h2>{editId ? "Editar Cliente" : "Agregar Cliente"}</h2>
+            <input
+              type="text"
+              name="nombre"
+              placeholder="Nombre"
+              value={form.nombre}
+              onChange={handleChange}
+            />
+            <input
+              type="text"
+              name="telefono"
+              placeholder="Teléfono"
+              value={form.telefono}
+              onChange={handleChange}
+            />
+            <input
+              type="text"
+              name="direccion"
+              placeholder="Dirección"
+              value={form.direccion}
+              onChange={handleChange}
+            />
+            <button onClick={handleSubmit}>
+              {editId ? "Actualizar" : "Crear"}
+            </button>
+            <button onClick={cerrarModal}>Cerrar</button>
+          </div>
         </div>
       )}
       {/* Mostrar como tabla */}
@@ -142,22 +172,21 @@ export default function Clientes() {
             <th>Nombre</th>
             <th>Teléfono</th>
             <th>Dirección</th>
-            <th>total_pedidos</th>
-            <th>total_gastado</th>
+            <th>Total Pedidos</th>
+            <th>Total Gastado</th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
           {clientes.map((cliente) => (
             <tr key={cliente.idcliente}>
-              <td>{cliente.idcliente}</td>
-              <td>{cliente.nombre}</td>
-              <td>{cliente.telefono}</td>
-              <td>{cliente.direccion}</td>
-              <td>{cliente.total_pedidos}</td>
-              <td>{cliente.total_gastado}</td>
+              <td data-label="ID">{cliente.idcliente}</td>
+              <td data-label="Nombre">{cliente.nombre}</td>
+              <td data-label="Telefono">{cliente.telefono}</td>
+              <td data-label="Direccion">{cliente.direccion}</td>
+              <td data-label="Total Pedidos">{cliente.total_pedidos}</td>
+              <td data-label="Total Gastado">{cliente.total_gastado}</td>
 
-              
               <td>
                 <button onClick={() => abrirModalParaEditar(cliente)}>
                   Editar
