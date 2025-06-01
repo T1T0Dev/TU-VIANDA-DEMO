@@ -1,0 +1,147 @@
+// src/pages/Comidas.jsx
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+export default function Comidas() {
+  const [comidas, setComidas] = useState([]);
+  const [form, setForm] = useState({ nombre: "", precio: "" });
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    cargarComidas();
+  }, []);
+
+  const cargarComidas = async () => {
+    try {
+      const res = await axios.get("http://localhost:3001/api/comidas");
+      setComidas(res.data);
+    } catch (error) {
+      setError("Error al cargar comidas. Por favor, inténtelo de nuevo más tarde.");
+      console.error("Error al cargar comidas:", error);
+      toast.error("Error al cargar comidas. Por favor, inténtelo de nuevo más tarde.");
+    }
+  };
+
+  const abrirModalParaCrear = () => {
+    setForm({ nombre: "", precio: "" });
+    setEditId(null);
+    setModalVisible(true);
+    setError(null); // Limpiar errores al abrir el modal
+
+  };
+
+  const abrirModalParaEditar = (comida) => {
+    setForm({ nombre: comida.nombre, precio: comida.precio });
+    setEditId(comida.idComida);
+    setModalVisible(true);
+    setError(null); // Limpiar errores al abrir el modal
+  };
+
+  const cerrarModal = () => {
+    setModalVisible(false);
+    setForm({ nombre: "", precio: "" });
+    setEditId(null);
+    setError(null); // Limpiar errores al cerrar el modal
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+    setError(null); // Limpiar errores al cambiar el formulario
+
+  };
+
+  const handleSubmit = async () => {
+    try {
+      if (editId) {
+        await axios.put(`http://localhost:3001/api/comidas/${editId}`, form);
+        toast.success("Comida actualizada correctamente");
+      } 
+      else {
+        await axios.post("http://localhost:3001/api/comidas", form);
+        toast.success("Comida agregada correctamente");
+
+
+      }
+      cargarComidas();
+      setForm({ nombre: "", precio: "" });
+    } catch (error) {
+
+      console.error("Error al guardar comida:", error);
+      setError("Error al guardar comida. Por favor, inténtelo de nuevo más tarde.");
+      toast.error("Error al guardar comida. Por favor, inténtelo de nuevo más tarde.");
+    }
+  };
+
+  const handleDelete = async (idComida) => {
+    try {
+      await axios.delete(`http://localhost:3001/api/comidas/${idComida}`);
+      toast.success("Comida eliminada correctamente");
+      cargarComidas();
+    } catch (error) {
+      console.error("Error al eliminar comida:", error);
+      setError("Error al eliminar comida. Por favor, inténtelo de nuevo más tarde.");
+      toast.error("Error al eliminar comida. Por favor, inténtelo de nuevo más tarde.");
+    }
+  };
+
+  return (
+    <div>
+      <h1>Gestión de Comidas</h1>
+      <button onClick={abrirModalParaCrear}>Agregar comida</button>
+
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Precio</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {comidas.map((comida) => (
+            <tr key={comida.idComida}>
+              <td>{comida.idComida}</td>
+              <td>{comida.nombre}</td>
+              <td>{"$"+ comida.precio}</td>
+              <td>
+                <button onClick={() => abrirModalParaEditar(comida)}>Editar</button>
+                <button onClick={() => handleDelete(comida.idComida)}>Eliminar</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {modalVisible && (
+        <div style={{ border: "1px solid gray", padding: 10, marginTop: 20 }}>
+          <h2>{editId ? "Editar Comida" : "Agregar Comida"}</h2>
+          <input
+            type="text"
+            name="nombre"
+            placeholder="Nombre"
+            value={form.nombre}
+            onChange={handleChange}
+          />
+          <input
+            type="number"
+            name="precio"
+            placeholder="Precio"
+            value={form.precio}
+            onChange={handleChange}
+          />
+          <button onClick={handleSubmit}>
+            {editId ? "Actualizar" : "Guardar"}
+          </button>
+          <button onClick={cerrarModal}>Cancelar</button>
+        </div>
+      )}
+        <ToastContainer position="top-right" autoClose={3000} />
+    </div>
+  );
+}
