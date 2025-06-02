@@ -196,7 +196,7 @@ export default function Venta() {
   };
 
   return (
-    <div>
+    <div className="container-crud">
       <h1>VENTAS</h1>
 
       <div>

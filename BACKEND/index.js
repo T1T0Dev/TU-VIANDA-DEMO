@@ -14,12 +14,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// CRUD 
 app.use("/api/comidas", comidasRoutes); 
 app.use("/api/clientes", clientesRoutes);
 app.use("/api/pedidos", pedidosRoutes);
 app.use("/api/detallepedidos", detallePedidosRoutes);
 app.use("/api/ventas", ventasRoutes); // Ruta para las ventas
 
+// Rutas de autenticación
 app.use("/api/auth", authRoutes); // Ruta para autenticación, si la tienes
 
 

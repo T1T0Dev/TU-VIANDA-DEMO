@@ -48,7 +48,7 @@ export default function Pedidos() {
 
 
   return (
-    <div>
+    <div className="container-crud">
       <h2>PEDIDOS</h2>
       {error && <p style={{ color: "red" }}>{error}</p>}
 
@@ -63,13 +63,14 @@ export default function Pedidos() {
       <table>
         <thead>
           <tr>
-            <th>Pedido #</th>
+            <th>Pedido</th>
             <th>Cliente</th>
             <th>Comida</th>
             <th>Precio Unitario</th>
             <th>Cantidad</th>
             <th>Subtotal</th>
             <th>Estado</th>
+            <th>Envio</th>
             <th>Fecha de Pedido</th>
             <th>Acciones</th>
           </tr>
@@ -84,6 +85,7 @@ export default function Pedidos() {
               <td data-label="Cantidad">{fila.cantidad}</td>
               <td data-label="Subtotal">${fila.subtotal}</td>
               <td data-label="Estado">{fila.estado}</td>
+              <td data-label="Envio">{fila.envio === 1 ? "Con envio" : "Sin envio"}</td>
               <td data-label="Fecha de Pedido">{new Date(fila.fecha_pedido).toLocaleString()}</td>
               <td data-label="Acciones">
                 {fila.estado === "pendiente" && (

@@ -6,9 +6,10 @@ import jwt from 'jsonwebtoken';
 const SECRET = "mi_secreto_super_seguro"; // Cambia esto por un secreto más seguro en producción
 
 export const loginUser = async (req, res) => {
-     const { usuario, contraseña } = req.body;
 
-  if (!usuario || !contraseña) {
+     const { usuario, pass } = req.body;
+
+  if (!usuario || !pass) {
     return res.status(400).json({ message: "Usuario y contraseña obligatorios" });
   }
 
@@ -19,7 +20,7 @@ export const loginUser = async (req, res) => {
 
     const user = rows[0];
 
-    const passwordOk = await bcryptjs.compare(contraseña, user.contraseña);
+    const passwordOk = await bcryptjs.compare(pass, user.pass);
 
     if (!passwordOk) return res.status(401).json({ message: "Contraseña incorrecta" });
 
@@ -33,3 +34,5 @@ export const loginUser = async (req, res) => {
     res.status(500).json({ message: "Error en el servidor" });
   }
 };
+
+export {SECRET};

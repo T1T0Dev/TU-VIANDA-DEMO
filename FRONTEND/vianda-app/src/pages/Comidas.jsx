@@ -99,7 +99,7 @@ export default function Comidas() {
   };
 
   return (
-    <div>
+    <div className="container-crud">  
       <h2>GESTION DE COMIDAS</h2>
       <button onClick={abrirModalParaCrear}>Agregar comida</button>
 

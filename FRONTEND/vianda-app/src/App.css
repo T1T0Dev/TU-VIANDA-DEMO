@@ -90,22 +90,31 @@ input:focus, select:focus, textarea:focus {
   outline: none;
 }
 
+.container-crud{
+margin: 0 auto !important;
+width: 90%;
+
+}
+
 table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  margin-top: 28px;
   background: #fff;
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 2px 12px var(--color-shadow);
+  margin-bottom:2rem;
 }
+
+
 th, td {
   border-bottom: 1px solid var(--color-borde);
   padding: 16px 14px;
   text-align: left;
   font-size: 1rem;
 }
+
 th {
   background: var(--color-primario);
   color: #fff;
@@ -192,6 +201,7 @@ td > button:last-child { margin-right: 0; }
   box-shadow: 0 4px 16px var(--color-shadow);
   margin-top: 24px;
 }
+
 .total-venta {
   font-size: 2rem;
   font-weight: 600;
@@ -199,6 +209,7 @@ td > button:last-child { margin-right: 0; }
   margin-top: 16px;
   text-align: left;
 }
+
 
 /* Switches */
 .label-switch, .checkbox-client {
@@ -350,6 +361,42 @@ td > button:last-child { margin-right: 0; }
   color: #007bff;
 }
 
+.login-container{
+    width: 350px;
+    margin: 100px auto;
+    padding: 2rem;
+    background-color: #f8f9fa;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    text-align: center;
+}
+
+
+.login-form input {
+  width: 100%;
+  padding: 0.7rem;
+  margin-bottom: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.login-form input:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+
+.login-form button:hover {
+  background-color: #0056b3;
+}
+
+.error-msg {
+  color: red;
+  margin-top: 0.5rem;
+  font-weight: bold;
+}
+
 /* RESPONSIVE */
 
 @media (max-width: 768px) {
@@ -431,22 +478,24 @@ td > button:last-child { margin-right: 0; }
   }
   td {
     position: relative;
-    padding-left: 0;
-    padding-right: 50%;
+    padding-left: 50%;
+    padding-right: 8px;
     text-align: left;
     border: none;
     border-bottom: 1px solid var(--color-borde);
   }
+
   td::before {
-    content: attr(data-label);
-    position: absolute;
-    right: 16px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-weight: 600;
-    color: var(--color-primario);
-    white-space: nowrap;
+  content: attr(data-label);
+  position: absolute;
+  left: 2px; /* En lugar de right */
+  top: 50%;
+  transform: translateY(-50%);
+  font-weight: 600;
+  color: var(--color-primario);
+  white-space: nowrap;
   }
+
   td:last-child { border-bottom: none; }
   td > button {
     margin: 6px 0 0 0;

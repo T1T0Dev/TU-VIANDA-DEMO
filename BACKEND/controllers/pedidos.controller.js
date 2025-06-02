@@ -68,6 +68,7 @@ export const getPedidoDetalles = async (req, res) => {
           dp.cantidad                            AS cantidad,
           (dp.cantidad * dp.precio_unitario)     AS subtotal,
           p.estado                               AS estado,
+          p.incluye_envio                        AS envio,
           p.fecha                                AS fecha_pedido
         FROM pedidos p
         JOIN clientes c   ON p.idcliente = c.idcliente

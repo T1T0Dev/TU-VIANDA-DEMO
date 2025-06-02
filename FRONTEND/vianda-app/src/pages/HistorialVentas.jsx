@@ -33,7 +33,7 @@ export default function HistorialVentas() {
   };
 
   return (
-    <div>
+    <div className="container-crud">
       <h2>📊 HISTORIAL DE VENTAS</h2>
 
       <label>Filtrar por fecha:</label>{" "}
