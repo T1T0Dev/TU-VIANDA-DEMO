@@ -350,6 +350,42 @@ td > button:last-child { margin-right: 0; }
   color: #007bff;
 }
 
+.login-container{
+    width: 350px;
+    margin: 100px auto;
+    padding: 2rem;
+    background-color: #f8f9fa;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    text-align: center;
+}
+
+
+.login-form input {
+  width: 100%;
+  padding: 0.7rem;
+  margin-bottom: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.login-form input:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+
+.login-form button:hover {
+  background-color: #0056b3;
+}
+
+.error-msg {
+  color: red;
+  margin-top: 0.5rem;
+  font-weight: bold;
+}
+
 /* RESPONSIVE */
 
 @media (max-width: 768px) {

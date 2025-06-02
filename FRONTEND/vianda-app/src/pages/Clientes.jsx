@@ -4,6 +4,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function Clientes() {
+  // Estados para manejar los clientes, formulario, modal y errores
   const [clientes, setClientes] = useState([]);
   const [clientesOriginales, setClientesOriginales] = useState([]);
   const [form, setForm] = useState({ nombre: "", telefono: "", direccion: "" });

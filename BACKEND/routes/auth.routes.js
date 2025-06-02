@@ -3,6 +3,9 @@ import { loginUser} from '../controllers/users.controller.js'; // Asegúrate de 
 
 const router = express.Router();
 
+router.get('/login', (req, res) => {
+  res.send("Usá POST para iniciar sesión, genio 😎");
+});
 
 router.post('/login',loginUser )
     
