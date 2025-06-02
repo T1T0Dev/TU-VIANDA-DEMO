@@ -11,7 +11,7 @@ export default function Navbar() {
     return (
         <nav className="navbar">
             <div className="navbar-container">
-                <Link to="/" className="navbar-logo">
+                <Link to="/venta" className="navbar-logo">
                     <img src={tuviandaLogo} alt="Logo de Tu Vianda" className="navbar-logo-img" />
                 </Link>
                 <button type="button" className="navbar-toggle" onClick={toggleNavbar}>
@@ -19,7 +19,7 @@ export default function Navbar() {
                 </button>
                 <div className={`navbar-links ${isOpen ? 'active' : ''}`}>
                     <ul className="navbar-list">
-                        <li><Link to="/" className="navbar-link">Venta</Link></li>
+                        <li><Link to="/venta" className="navbar-link">Venta</Link></li>
                         <li><Link to="/comidas" className="navbar-link">Comidas</Link></li>
                         <li><Link to="/clientes" className="navbar-link">Clientes</Link></li>
                         <li><Link to="/pedidos" className="navbar-link">Pedidos</Link></li>
