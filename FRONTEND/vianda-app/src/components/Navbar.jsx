@@ -1,11 +1,21 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import tuviandaLogo from "../assets/tu-vianda.jpeg";
 
+import { useAuth } from "../context/AuthContext"; // 👈 importar el hook useAuth
+
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-
+  const location = useLocation();
+  const { logout } = useAuth(); // 👈 usar función logout
+  const navigate = useNavigate();
   const toggleNavbar = () => setIsOpen(!isOpen);
+
+  const handleLogout = () => {
+    logout(); // 👈 borra el token
+    setIsOpen(false); // 👈 cierra el menú si está abierto
+    navigate("/"); // 👈 redirige a la página de inicio
+  };
 
   return (
     <nav className="navbar">
@@ -47,12 +57,20 @@ export default function Navbar() {
                 Historial de Ventas
               </Link>
             </li>
-            <li>
-              <Link to="/" 
-              className="navbar-link">
-              Cerrar Sesion
-              </Link>
-            </li>
+            {location.pathname !== "/" && (
+              <li
+                onClick={handleLogout}
+                className="navbar-link"
+                style={{
+                  color: "red",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                Cerrar sesion
+              </li>
+            )}
           </ul>
         </div>
       </div>

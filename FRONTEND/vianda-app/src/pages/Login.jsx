@@ -1,11 +1,14 @@
 import { useState } from "react";
 import axios from "axios";
 import {useNavigate} from "react-router-dom";
+import {useAuth} from "../context/AuthContext.jsx";
 
 function Login() {
   const [usuario, setUsuario] = useState("");
   const [pass, setPass] = useState("");
+
   const navigate = useNavigate();
+  const { setIsAuthenticated } = useAuth(); // Obtener la función para actualizar el estado de autenticación
 
   const handleSubmit = async (e) => {
     e.preventDefault(); // Esto es clave para evitar el GET automático
@@ -18,6 +21,11 @@ function Login() {
 
 
       localStorage.setItem("token", res.data.token); // Guardar el token en localStorage
+
+      console.log("Token recibido:", res.data.token);
+
+      setIsAuthenticated(true); // Actualizar el estado de autenticación
+      console.log("Usuario autenticado correctamente");
 
       navigate("/venta"); // Redirigir a la página principal o donde quieras
       // Redireccionar o guardar token, etc.
