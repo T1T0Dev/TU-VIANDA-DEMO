@@ -1,11 +1,22 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import tuviandaLogo from "../assets/tu-vianda.jpeg";
 
+import { useAuth } from "../context/AuthContext"; // 👈 importar el hook useAuth
+
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-
+  const location = useLocation();
+  const { logout } = useAuth(); // 👈 usar función logout
+  const navigate = useNavigate();
   const toggleNavbar = () => setIsOpen(!isOpen);
+
+  const handleLogout = () => {
+    logout(); // 👈 borra el token
+    setIsOpen(false); // 👈 cierra el menú si está abierto
+    navigate("/"); // 👈 redirige a la página de inicio
+ 
+  };
 
   return (
     <nav className="navbar">
@@ -23,36 +34,31 @@ export default function Navbar() {
         <div className={`navbar-links ${isOpen ? "active" : ""}`}>
           <ul className="navbar-list">
             <li>
-              <Link to="/venta" className="navbar-link">
-                Venta
-              </Link>
+              <Link to="/venta" className="navbar-link">Venta</Link>
             </li>
             <li>
-              <Link to="/comidas" className="navbar-link">
-                Comidas
-              </Link>
+              <Link to="/comidas" className="navbar-link">Comidas</Link>
             </li>
             <li>
-              <Link to="/clientes" className="navbar-link">
-                Clientes
-              </Link>
+              <Link to="/clientes" className="navbar-link">Clientes</Link>
             </li>
             <li>
-              <Link to="/pedidos" className="navbar-link">
-                Pedidos
-              </Link>
+              <Link to="/pedidos" className="navbar-link">Pedidos</Link>
             </li>
             <li>
-              <Link to="/historial-ventas" className="navbar-link">
-                Historial de Ventas
-              </Link>
+              <Link to="/historial-ventas" className="navbar-link">Historial de Ventas</Link>
             </li>
-            <li>
-              <Link to="/" 
-              className="navbar-link">
-              Cerrar Sesion
-              </Link>
-            </li>
+            {location.pathname !== "/" && (
+              <li>
+                <button
+                  onClick={handleLogout}
+                  className="navbar-link"
+                  style={{ color: "red", background: "none", border: "none", cursor: "pointer" }}
+                >
+                  Cerrar Sesión
+                </button>
+              </li>
+            )}
           </ul>
         </div>
       </div>
