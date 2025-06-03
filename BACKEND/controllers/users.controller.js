@@ -18,7 +18,7 @@ export const loginUser = async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Usuario o contraseña incorrectos" });
     }
-    // En este punto, JWT_SECRET existe porque cargaste dotenv
+
     const token = jwt.sign(
       { id: user.idusuario, usuario: user.usuario },
       process.env.JWT_SECRET,
