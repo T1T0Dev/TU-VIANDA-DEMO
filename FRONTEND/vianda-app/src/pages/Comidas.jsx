@@ -18,7 +18,7 @@ export default function Comidas() {
 
   const cargarComidas = async () => {
     try {
-      const res = await axios.get("http://localhost:3001/api/comidas");
+      const res = await axios.get("/api/comidas");
       setComidas(res.data);
       setComidasOriginales(res.data); // Guardar las comidas originales para restaurar al buscar
       setError(null); // Limpiar errores al cargar comidas
@@ -42,7 +42,7 @@ export default function Comidas() {
 
   const abrirModalParaEditar = (comida) => {
     setForm({ nombre: comida.nombre, precio: comida.precio });
-    setEditId(comida.idComida);
+    setEditId(comida.id); // <-- Ya no usa Number
     setModalVisible(true);
     setError(null); // Limpiar errores al abrir el modal
   };
@@ -62,13 +62,23 @@ export default function Comidas() {
 
   const handleSubmit = async () => {
     try {
+      // Ya no convierte precio a número
+      const dataToSend = {
+        nombre: form.nombre,
+        precio: form.precio,
+      };
+
       if (editId) {
-        await axios.put(`http://localhost:3001/api/comidas/${editId}`, form);
+        await axios.put(
+          `/api/comidas/${editId}`,
+          dataToSend
+        );
         toast.success("Comida actualizada correctamente");
       } else {
-        await axios.post("http://localhost:3001/api/comidas", form);
+        await axios.post("/api/comidas", dataToSend);
         toast.success("Comida agregada correctamente");
       }
+
       cargarComidas();
       setForm({ nombre: "", precio: "" });
     } catch (error) {
@@ -82,9 +92,9 @@ export default function Comidas() {
     }
   };
 
-  const handleDelete = async (idComida) => {
+  const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:3001/api/comidas/${idComida}`);
+      await axios.delete(`/api/comidas/${id}`);
       toast.success("Comida eliminada correctamente");
       cargarComidas();
     } catch (error) {
@@ -99,7 +109,7 @@ export default function Comidas() {
   };
 
   return (
-    <div className="container-crud">  
+    <div className="container-crud">
       <h2>GESTION DE COMIDAS</h2>
       <button onClick={abrirModalParaCrear}>Agregar comida</button>
 
@@ -124,7 +134,6 @@ export default function Comidas() {
       <table>
         <thead>
           <tr>
-            <th>ID</th>
             <th>Nombre</th>
             <th>Precio</th>
             <th>Acciones</th>
@@ -132,15 +141,14 @@ export default function Comidas() {
         </thead>
         <tbody>
           {comidas.map((comida) => (
-            <tr key={comida.idComida}>
-              <td data-label="ID">{comida.idComida}</td>
+            <tr key={comida.id}>
               <td data-label="Nombre">{comida.nombre}</td>
               <td data-label="Precio">${comida.precio}</td>
               <td data-label="Acciones">
                 <button onClick={() => abrirModalParaEditar(comida)}>
                   Editar
                 </button>
-                <button onClick={() => handleDelete(comida.idComida)}>
+                <button onClick={() => handleDelete(comida.id)}>
                   Eliminar
                 </button>
               </td>

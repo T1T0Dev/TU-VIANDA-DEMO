@@ -1,51 +1,94 @@
-// src/pages/Pedidos.jsx
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function Pedidos() {
-  const [pedidoDetalles, setPedidoDetalles] = useState([]);
+  const [pedidosCompletos, setPedidosCompletos] = useState([]);
+  const [clientes, setClientes] = useState([]);
+  const [comidas, setComidas] = useState([]);
   const [filtroEstado, setFiltroEstado] = useState("pendiente");
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    cargarPedidoDetalles();
+    cargarDatos();
   }, []);
 
-  const cargarPedidoDetalles = async () => {
+  const cargarDatos = async () => {
     try {
-      const res = await axios.get("http://localhost:3001/api/pedidos/detalles");
-      setPedidoDetalles(res.data);
+      // Pedidos, detalles, clientes y comidas paralelos
+      const [resPedidos, resDetalles, resClientes, resComidas] =
+        await Promise.all([
+          axios.get("/api/pedidos"),
+          axios.get("/api/detalle_pedidos"),
+          axios.get("/api/clientes"),
+          axios.get("/api/comidas"),
+        ]);
+
+      setClientes(resClientes.data);
+      setComidas(resComidas.data);
+
+      // ...existing code...
+      // Map cliente id => nombre para fácil acceso
+      const mapaClientes = {};
+      resClientes.data.forEach((c) => {
+        mapaClientes[c.id] = c.nombre;
+      });
+
+      // Map comida id => nombre
+      const mapaComidas = {};
+      resComidas.data.forEach((c) => {
+        mapaComidas[c.id] = c.nombre;
+      });
+
+      // Armar pedidos completos con detalles y nombres
+      const pedidos = resPedidos.data;
+      const detalles = resDetalles.data;
+
+      const pedidosConDetalles = pedidos.map((pedido) => {
+        const detallesDelPedido = detalles
+          .filter((d) => d.idpedido === pedido.id)
+          .map((detalle) => ({
+            ...detalle,
+            nombreComida: mapaComidas[detalle.idcomida] || "Sin nombre",
+          }));
+
+        return {
+          ...pedido,
+          nombreCliente:
+            mapaClientes[pedido.idcliente] || "Cliente no encontrado",
+          detalles: detallesDelPedido,
+        };
+      });
+
+      setPedidosCompletos(pedidosConDetalles);
     } catch (err) {
-      console.error("Error al cargar pedidos:", err);
-      setError("No se pudieron cargar los pedidos. Intenta más tarde.");
-      toast.error("Error al cargar pedidos. Intenta más tarde.");
+      console.error("Error cargando datos:", err);
+      setError("No se pudieron cargar los datos. Intenta más tarde.");
+      toast.error("Error cargando datos");
     }
   };
 
   const marcarEntregado = async (idpedido) => {
     try {
-      // 1) Cambiar estado a "entregado" en pedidos
-      await axios.put(`http://localhost:3001/api/pedidos/${idpedido}`);
-
-      // 2) Insertar en tabla ventas automáticamente (suponiendo que tu backend hace esto)
-      await axios.post("http://localhost:3001/api/ventas", { idpedido });
-
+      await axios.put(`/api/pedidos/${idpedido}`, {
+        estado: "entregado",
+      });
+      await axios.post("/api/ventas", {
+        idpedido,
+        fecha_venta: new Date().toISOString(),
+      });
       toast.success(`Pedido ${idpedido} marcado como entregado.`);
-
-      // 3) Refrescar la grilla
-      cargarPedidoDetalles();
+      cargarDatos();
     } catch (err) {
-      console.error("Error al marcar entregado:", err);
-      toast.error("No se pudo actualizar el pedido. Revisá la consola.");
+      console.error("Error marcando entregado:", err);
+      toast.error("No se pudo actualizar el pedido.");
     }
   };
 
-  const pedidosFiltrados = pedidoDetalles.filter(
-  (pedido) => pedido.estado === filtroEstado
+  const pedidosFiltrados = pedidosCompletos.filter(
+    (pedido) => pedido.estado === filtroEstado
   );
-
 
   return (
     <div className="container-crud">
@@ -54,7 +97,9 @@ export default function Pedidos() {
 
       <button
         onClick={() =>
-          setFiltroEstado(filtroEstado === "pendiente" ? "entregado" : "pendiente")
+          setFiltroEstado(
+            filtroEstado === "pendiente" ? "entregado" : "pendiente"
+          )
         }
       >
         {filtroEstado === "pendiente" ? "VER ENTREGADOS" : "VER PENDIENTES"}
@@ -63,41 +108,45 @@ export default function Pedidos() {
       <table>
         <thead>
           <tr>
-            <th>Pedido</th>
             <th>Cliente</th>
             <th>Comida</th>
             <th>Precio Unitario</th>
             <th>Cantidad</th>
             <th>Subtotal</th>
             <th>Estado</th>
-            <th>Envio</th>
+            <th>Envío</th>
             <th>Fecha de Pedido</th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
-          {pedidosFiltrados.map((fila) => (
-            <tr key={`${fila.numero_pedido}-${fila.comida}`}>
-              <td data-label="Pedido #">{fila.numero_pedido}</td>
-              <td data-label="Cliente">{fila.cliente}</td>
-              <td data-label="Comida">{fila.comida}</td>
-              <td data-label="Precio Unitario">{"$"+fila.preciounitario}</td>
-              <td data-label="Cantidad">{fila.cantidad}</td>
-              <td data-label="Subtotal">${fila.subtotal}</td>
-              <td data-label="Estado">{fila.estado}</td>
-              <td data-label="Envio">{fila.envio === 1 ? "Con envio" : "Sin envio"}</td>
-              <td data-label="Fecha de Pedido">{new Date(fila.fecha_pedido).toLocaleString()}</td>
-              <td data-label="Acciones">
-                {fila.estado === "pendiente" && (
-                  <button
-                    onClick={() => marcarEntregado(fila.numero_pedido)}
-                  >
-                    Marcar entregado
-                  </button>
-                )}
-              </td>
-            </tr>
-          ))}
+          {pedidosFiltrados.map((pedido) =>
+            pedido.detalles.map((detalle) => (
+              <tr key={`${pedido.id}-${detalle.idcomida}`}>
+                <td data-label="Cliente">{pedido.nombreCliente}</td>
+                <td data-label="Comida">{detalle.nombreComida}</td>
+                <td data-label="Precio Unitario">${detalle.precio_unitario}</td>
+                <td data-label="Cantidad">{detalle.cantidad}</td>
+                <td data-label="Subtotal">
+                  ${detalle.precio_unitario * detalle.cantidad}
+                </td>
+                <td data-label="Estado">{pedido.estado}</td>
+                <td data-label="Envío">
+                  {pedido.incluye_envio ? "Con envío" : "Sin envío"}
+                </td>
+                <td data-label="Fecha de Pedido">
+                  {new Date(pedido.fecha).toLocaleString()}
+                </td>
+                <td data-label="Acciones">
+                  {pedido.estado === "pendiente" && (
+                    <button onClick={() => marcarEntregado(pedido.id)}>
+                      Marcar entregado
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
 

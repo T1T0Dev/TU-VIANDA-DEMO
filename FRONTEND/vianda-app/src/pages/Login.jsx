@@ -10,33 +10,44 @@ function Login() {
   const navigate = useNavigate();
   const { setIsAuthenticated } = useAuth(); // Obtener la función para actualizar el estado de autenticación
 
-  const handleSubmit = async (e) => {
-    e.preventDefault(); // Esto es clave para evitar el GET automático
+ const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    try {
-      const res = await axios.post("http://localhost:3001/api/auth/login", {
+  try {
+    const res = await axios.get("/api/usuarios", {
+      params: {
         usuario,
-        pass
-      });
+        pass,
+      },
+    });
 
+    if (res.data.length > 0) {
+      const user = res.data[0];
 
-      localStorage.setItem("token", res.data.token); // Guardar el token en localStorage
+      // Token simulado (solo para que no quede vacío)
+      const fakeToken = btoa(`${user.usuario}:${user.pass}`);
+      localStorage.setItem("token", fakeToken);
 
-      console.log("Token recibido:", res.data.token);
+      setIsAuthenticated(true);
+      console.log("Usuario autenticado:", user.usuario);
 
-      setIsAuthenticated(true); // Actualizar el estado de autenticación
-      console.log("Usuario autenticado correctamente");
-
-      navigate("/venta"); // Redirigir a la página principal o donde quieras
-      // Redireccionar o guardar token, etc.
-    } catch (error) {
-      console.error("Error de login:", error.response?.data || error.message);
+      navigate("/venta");
+    } else {
+      alert("Usuario o contraseña incorrectos");
     }
-  };
+  } catch (error) {
+    console.error("Error en login:", error.message);
+    alert("Error al conectar con el servidor");
+  }
+};
+
 
   return (
     <div className="login-container">
       <h2>Iniciar sesión</h2>
+      <h3 style={{ fontSize: "1rem", marginBottom: "1rem" }}>
+        USUARIO: titodev CONTRASEÑA:viandas
+      </h3>
       <form className="login-form" onSubmit={handleSubmit}>
         <input
           type="text"

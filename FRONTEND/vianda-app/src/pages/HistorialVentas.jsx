@@ -16,15 +16,65 @@ export default function HistorialVentas() {
 
   const cargarVentasDetalles = async () => {
     try {
-      const res = await axios.get("http://localhost:3001/api/ventas/detalles", {
-        params: fechaFiltro ? { fecha: fechaFiltro } : {},
+      // Traer todas las colecciones necesarias
+      const [resVentas, resPedidos, resClientes, resDetalles] = await Promise.all([
+        axios.get("/api/ventas"),
+        axios.get("/api/pedidos"),
+        axios.get("/api/clientes"),
+        axios.get("/api/detalle_pedidos"),
+      ]);
+
+      // Mapear clientes por id
+      const mapaClientes = {};
+      resClientes.data.forEach(c => {
+        mapaClientes[c.id] = c.nombre;
       });
 
-      setVentasDetalles(res.data);
+      // Mapear pedidos por id
+      const mapaPedidos = {};
+      resPedidos.data.forEach(p => {
+        mapaPedidos[p.id] = p;
+      });
 
-      const total = res.data.reduce((acc, venta) => acc + Math.round(venta.total_venta), 0);
-      setGananciaTotal(total);
-      setCantidadVentas(res.data.length);
+      // Agrupar detalles por idpedido
+      const detallesPorPedido = {};
+      resDetalles.data.forEach(d => {
+        if (!detallesPorPedido[d.idpedido]) detallesPorPedido[d.idpedido] = [];
+        detallesPorPedido[d.idpedido].push(d);
+      });
+
+      // Armar el array de ventas con detalles
+      let ventas = resVentas.data.map(v => {
+        const pedido = mapaPedidos[v.idpedido] || {};
+        const cliente = mapaClientes[pedido.idcliente] || "Desconocido";
+        const detalles = detallesPorPedido[v.idpedido] || [];
+
+        // Calcular el total de la venta sumando los subtotales de los detalles
+        const total_venta = detalles.reduce(
+          (acc, det) => acc + (Number(det.precio_unitario) * Number(det.cantidad)),
+          0
+        );
+
+        return {
+          id_venta: v.id,
+          fecha_venta: v.fecha_venta,
+          numero_pedido: v.idpedido,
+          cliente,
+          total_venta,
+        };
+      });
+
+      // Filtrar por fecha si corresponde
+      if (fechaFiltro) {
+        ventas = ventas.filter((venta) => {
+          const fechaVenta = new Date(venta.fecha_venta).toISOString().split("T")[0];
+          return fechaVenta === fechaFiltro;
+        });
+      }
+
+      setVentasDetalles(ventas);
+      setGananciaTotal(ventas.reduce((acc, venta) => acc + Math.round(venta.total_venta), 0));
+      setCantidadVentas(ventas.length);
     } catch (err) {
       console.error("Error al cargar ventas:", err);
       setError("No se pudieron cargar las ventas. Intenta más tarde.");
@@ -51,7 +101,6 @@ export default function HistorialVentas() {
             <th>Venta #</th>
             <th>Fecha de Venta</th>
             <th>Pedido #</th>
-            <th>Cliente</th>
             <th>Total Venta</th>
           </tr>
         </thead>
@@ -61,7 +110,6 @@ export default function HistorialVentas() {
               <td data-label="ID">{fila.id_venta}</td>
               <td data-label="Fecha Venta">{new Date(fila.fecha_venta).toLocaleString()}</td>
               <td data-label="Numero de Pedido">{fila.numero_pedido}</td>
-              <td data-label="Cliente">{fila.cliente}</td>
               <td data-label="Total de Venta">${Math.round(fila.total_venta)}</td>
             </tr>
           ))}

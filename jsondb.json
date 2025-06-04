@@ -1,0 +1,231 @@
+{
+  "usuarios": [
+    {
+      "id": "1",
+      "usuario": "Mariana",
+      "pass": "titomivaron"
+    },
+    {
+      "id": "2",
+      "usuario": "titodev",
+      "pass": "viandas"
+    }
+  ],
+  "comidas": [
+    {
+      "nombre": "Milanesa con puré",
+      "precio": "5500",
+      "id": "1"
+    },
+    {
+      "nombre": "Tarta de verdura",
+      "precio": "3000",
+      "id": "2"
+    },
+    {
+      "nombre": "Ensalada César",
+      "precio": "4000",
+      "id": "3"
+    },
+    {
+      "nombre": "Pizza de muzzarella",
+      "precio": "4500",
+      "id": "4"
+    },
+    {
+      "nombre": "Sopa de verduras",
+      "precio": "2500",
+      "id": "5"
+    },
+    {
+      "nombre": "Pasta con salsa de tomate",
+      "precio": "3500",
+      "id": "6"
+    },
+    {
+      "nombre": "Pollo al horno con papas",
+      "precio": "6000",
+      "id": "7"
+    },
+    {
+      "nombre": "Lasaña de carne",
+      "precio": "7000",
+      "id": "8"
+    },
+    {
+      "nombre": "Tacos de pollo",
+      "precio": "5000",
+      "id": "9"
+    },
+    {
+      "nombre": "Sushi variado",
+      "precio": "8000",
+      "id": "10"
+    },
+    {
+      "nombre": "Hamburguesa con papas fritas",
+      "precio": "6000",
+      "id": "11"
+    },
+    {
+      "nombre": "Burrito de carne",
+      "precio": "5500",
+      "id": "12"
+    },
+    {
+      "nombre": "Curry de garbanzos",
+      "precio": "5000",
+      "id": "13"
+    },
+    {
+      "nombre": "Pescado al limón con arroz",
+      "precio": "7000",
+      "id": "14"
+    },
+    {
+      "nombre": "Wrap de pollo y vegetales",
+      "precio": "4500",
+      "id": "15"
+    }
+
+  ],
+  "clientes": [
+    {
+      "id": "1",
+      "nombre": "Carlos López",
+      "telefono": "1122334455",
+      "direccion": "Calle Falsa 123"
+    },
+    {
+      "id": "629d",
+      "nombre": "Thiago Robles",
+      "telefono": "381 123 4567",
+      "direccion": "Sistema 123"
+    },
+    {
+      "id": "2",
+      "nombre": "Ana Pérez",
+      "telefono": "9876543210",
+      "direccion": "Avenida Siempre Viva 456"
+    },
+    {
+      "id": "3",
+      "nombre": "Luis García",
+      "telefono": "5551234567",
+      "direccion": "Calle del Sol 789"
+    },
+    {
+      "id": "4",
+      "nombre": "María Fernández",
+      "telefono": "4449876543",
+      "direccion": "Plaza Mayor 101"
+    },
+    {
+      "id": "5",
+      "nombre": "Pedro Martínez",
+      "telefono": "3334567890",
+      "direccion": "Calle Luna 202"
+    },
+    {
+      "id": "6",
+      "nombre": "Laura Sánchez",
+      "telefono": "2223456789",
+      "direccion": "Avenida Estrella 303"
+    },
+    {
+      "id": "7",
+      "nombre": "Javier Torres",
+      "telefono": "1112345678",
+      "direccion": "Calle Mar 404"
+    },
+    {
+      "id": "8",
+      "nombre": "Sofía Ramírez",
+      "telefono": "9998765432",
+      "direccion": "Calle Tierra 505"
+    },
+    {
+      "id": "9",
+      "nombre": "Diego Ruiz",
+      "telefono": "8887654321",
+      "direccion": "Avenida Aire 606"
+    },
+    {
+      "id": "10",
+      "nombre": "Clara Gómez",
+      "telefono": "7776543210",
+      "direccion": "Calle Agua 707"
+    }
+  ],
+  "pedidos": [
+    {
+      "estado": "entregado",
+      "id": "1"
+    },
+    {
+      "id": "87dc",
+      "idcliente": "629d",
+      "incluye_envio": true,
+      "estado": "pendiente",
+      "fecha": "2025-06-03T23:49:54.029Z"
+    },
+    {
+      "id": "4ee6",
+      "idcliente": "629d",
+      "incluye_envio": true,
+      "estado": "pendiente",
+      "fecha": "2025-06-03T23:52:43.972Z"
+    },
+    {
+      "id": "8634",
+      "idcliente": "629d",
+      "incluye_envio": true,
+      "estado": "pendiente",
+      "fecha": "2025-06-03T23:53:05.416Z"
+    },
+    {
+      "id": "5d98",
+      "idcliente": "629d",
+      "incluye_envio": false,
+      "estado": "pendiente",
+      "fecha": "2025-06-03T23:53:18.402Z"
+    },
+    {
+      "estado": "entregado",
+      "id": "0aa2"
+    }
+  ],
+  "detalle_pedidos": [
+    {
+      "id": "1",
+      "idpedido": "1",
+      "idcomida": "2",
+      "cantidad": 2,
+      "precio_unitario": 1200
+    },
+    {
+      "id": "a5d3",
+      "idpedido": "0aa2",
+      "idcomida": "1",
+      "cantidad": 1,
+      "precio_unitario": 5500
+    }
+  ],
+  "ventas": [
+    {
+      "id": "1",
+      "idpedido": "1",
+      "fecha_venta": "2025-06-03T13:00:00Z"
+    },
+    {
+      "id": "3ebb",
+      "idpedido": "0aa2",
+      "fecha_venta": "2025-06-03T23:59:30.772Z"
+    },
+    {
+      "id": "2d48",
+      "idpedido": "1",
+      "fecha_venta": "2025-06-03T23:59:33.176Z"
+    }
+  ]
+}

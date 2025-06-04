@@ -15,14 +15,19 @@ export default function Venta() {
   });
   const [incluyeEnvio, setIncluyeEnvio] = useState(false);
   const [comidas, setComidas] = useState([]);
-  const [venta, setVenta] = useState([]);
+  const [venta, setVenta] = useState(() => {
+    const carritoGuardado = localStorage.getItem("carritoVenta");
+    return carritoGuardado ? JSON.parse(carritoGuardado) : [];
+  });
   const [form, setForm] = useState({ idComida: "", cantidad: 1 });
   const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(false); // <-- nuevo estado
+  const [loading, setLoading] = useState(false);
+
+
 
   useEffect(() => {
     axios
-      .get("http://localhost:3001/api/clientes")
+      .get("/api/clientes")
       .then((res) => setClientes(res.data))
       .catch((err) => console.error("Error al cargar clientes", err));
   }, []);
@@ -33,7 +38,7 @@ export default function Venta() {
 
   const cargarComidas = async () => {
     try {
-      const res = await axios.get("http://localhost:3001/api/comidas");
+      const res = await axios.get("/api/comidas");
       setComidas(res.data);
     } catch (error) {
       console.error("Error al cargar comidas:", error);
@@ -45,6 +50,12 @@ export default function Venta() {
     setTotal(nuevoTotal);
   }, [venta]);
 
+  // ...existing code...
+  useEffect(() => {
+    localStorage.setItem("carritoVenta", JSON.stringify(venta));
+  }, [venta]);
+  // ...existing code...
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
@@ -54,20 +65,23 @@ export default function Venta() {
     if (!nuevoCliente.nombre.trim()) {
       return toast.error("El nombre del cliente es obligatorio");
     }
+    setLoading(true);
     try {
       const res = await axios.post(
-        "http://localhost:3001/api/clientes",
+        "/api/clientes",
         nuevoCliente
       );
       setClientes((prev) => [...prev, res.data]);
-      setClienteSeleccionado(res.data.idcliente);
-      setClienteExistente(true); // Ahora es cliente existente
-      setNuevoCliente({ nombre: "", telefono: "", direccion: "" }); // Limpiar formulario
-
+      setClienteSeleccionado(res.data.id);
+      setClienteExistente(true);
+      setNuevoCliente({ nombre: "", telefono: "", direccion: "" });
       toast.success("Cliente creado exitosamente");
+      setMostrarModal(false);
     } catch (error) {
       console.error("Error al crear cliente:", error);
       toast.error("Error al crear cliente. Revisá la consola.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -75,10 +89,8 @@ export default function Venta() {
     if (!form.idComida) {
       return toast.error("Seleccioná una comida primero");
     }
-    const idBuscado = Number(form.idComida);
-    const comidaSeleccionada = comidas.find(
-      (c) => Number(c.idComida) === idBuscado
-    );
+    const idBuscado = form.idComida;
+    const comidaSeleccionada = comidas.find((c) => c.id == idBuscado);
     if (!comidaSeleccionada) {
       return toast.error("Comida no encontrada");
     }
@@ -89,9 +101,8 @@ export default function Venta() {
 
     setVenta((prevVenta) => {
       const indexExistente = prevVenta.findIndex(
-        (item) => Number(item.idComida) === idBuscado
+        (item) => item.id == idBuscado
       );
-
       if (indexExistente >= 0) {
         const nuevaVenta = [...prevVenta];
         const itemViejo = nuevaVenta[indexExistente];
@@ -104,11 +115,11 @@ export default function Venta() {
         return nuevaVenta;
       } else {
         const nuevoItem = {
-          idComida: comidaSeleccionada.idComida,
+          id: comidaSeleccionada.id,
           nombre: comidaSeleccionada.nombre,
-          precio: comidaSeleccionada.precio,
+          precio: Number(comidaSeleccionada.precio),
           cantidad,
-          subtotal: comidaSeleccionada.precio * cantidad,
+          subtotal: Number(comidaSeleccionada.precio) * cantidad,
         };
         return [...prevVenta, nuevoItem];
       }
@@ -123,78 +134,77 @@ export default function Venta() {
     setVenta(nuevaVenta);
   };
 
-  // La magia está acá
-  // Dentro de tu componente Venta.jsx...
+  // ...existing code...
+const enviarPedido = async () => {
+  setLoading(true);
+  try {
+    if (venta.length === 0) {
+      toast.error("No hay items en la venta");
+      setLoading(false);
+      return;
+    }
 
-  const enviarPedido = async () => {
-    setLoading(true);
+    let idClienteFinal = clienteSeleccionado;
 
-    try {
-      let idClienteFinal = clienteSeleccionado;
-
-      // 1) Si no es cliente existente, lo creo primero y obtengo su id.
-      if (!clienteExistente) {
-        if (!nuevoCliente.nombre.trim()) {
-          toast.error("El nombre del cliente es obligatorio");
-          setLoading(false);
-          return;
-        }
-
-        const resCliente = await axios.post(
-          "http://localhost:3001/api/clientes",
-          nuevoCliente
-        );
-        idClienteFinal = resCliente.data.idcliente;
-        setClientes((prev) => [...prev, resCliente.data]);
-        setClienteSeleccionado(idClienteFinal);
-        setClienteExistente(true);
-      }
-
-      // 2) Verifico que ya tenga un idCliente antes de continuar.
-      if (!idClienteFinal) {
-        toast.error("No se pudo determinar el cliente para el pedido");
+    if (!clienteExistente) {
+      if (!nuevoCliente.nombre.trim()) {
+        toast.error("El nombre del cliente es obligatorio");
         setLoading(false);
         return;
       }
-
-      // 3) Creo el pedido y guardo el idpedido que devuelve el backend.
-      const resPedido = await axios.post("http://localhost:3001/api/pedidos", {
-        idcliente: idClienteFinal,
-        incluye_envio: incluyeEnvio,
-      });
-
-      const idpedido = resPedido.data.idpedido;
-
-      // 4) Ahora recorro cada ítem del carrito y hago un POST separado a detalle_pedidos.
-      //    Usamos Promise.all para enviarlos en paralelo y esperar a que todos terminen.
-      await Promise.all(
-        venta.map((item) =>
-          axios.post("http://localhost:3001/api/detallepedidos", {
-            idpedido,
-            idcomida: item.idComida,
-            cantidad: item.cantidad,
-            precio_unitario: item.precio,
-          })
-        )
+      const resCliente = await axios.post(
+        "/api/clientes",
+        nuevoCliente
       );
-
-      toast.success("Pedido enviado con éxito");
-
-      // 5) Limpio todo el estado para volver al inicio
-      setVenta([]);
-      setForm({ idComida: "", cantidad: 1 });
-      setMostrarModal(false);
-      setNuevoCliente({ nombre: "", telefono: "", direccion: "" });
-      setIncluyeEnvio(false);
-      setClienteSeleccionado(null);
-    } catch (error) {
-      console.error("Error al enviar pedido:", error);
-      toast.error("Error al enviar el pedido. Revisá la consola.");
-    } finally {
-      setLoading(false);
+      idClienteFinal = resCliente.data.id;
+      setClientes((prev) => [...prev, resCliente.data]);
+      setClienteSeleccionado(idClienteFinal);
+      setClienteExistente(true);
     }
-  };
 
+    if (!idClienteFinal) {
+      toast.error("No se pudo determinar el cliente para el pedido");
+      setLoading(false);
+      return;
+    }
+
+    // Asegúrate de enviar idcliente como string
+    const resPedido = await axios.post("/api/pedidos", {
+      idcliente: String(idClienteFinal),
+      incluye_envio: incluyeEnvio,
+      estado: "pendiente",
+      fecha: new Date().toISOString(),
+    });
+
+    const idpedido = resPedido.data.id;
+
+    await Promise.all(
+      venta.map((item) =>
+        axios.post("/api/detalle_pedidos", {
+          idpedido: String(idpedido),
+          idcomida: String(item.id),
+          cantidad: item.cantidad,
+          precio_unitario: item.precio,
+        })
+      )
+    );
+
+    toast.success("Pedido enviado con éxito");
+
+    setVenta([]);
+    localStorage.removeItem("carritoVenta");
+    setForm({ idComida: "", cantidad: 1 });
+    setMostrarModal(false);
+    setNuevoCliente({ nombre: "", telefono: "", direccion: "" });
+    setIncluyeEnvio(false);
+    setClienteSeleccionado(null);
+  } catch (error) {
+    console.error("Error al enviar pedido:", error);
+    toast.error("Error al enviar el pedido. Revisá la consola.");
+  } finally {
+    setLoading(false);
+  }
+};
   return (
     <div className="container-crud">
       <h1>VENTAS</h1>
@@ -205,7 +215,7 @@ export default function Venta() {
             Seleccioná una comida
           </option>
           {comidas.map((c) => (
-            <option key={c.idComida} value={c.idComida}>
+            <option key={c.id} value={c.id}>
               {c.nombre} (${c.precio})
             </option>
           ))}
@@ -221,10 +231,16 @@ export default function Venta() {
         />
 
         <button onClick={agregarItem}>Agregar</button>
-        <button onClick={() => setVenta([])}>Vaciar Carrito</button>
+        <button
+          onClick={() => {
+            setVenta([]);
+            localStorage.removeItem("carritoVenta");
+          }}
+        >
+          Vaciar Carrito
+        </button>
         <button onClick={() => setMostrarModal(true)}>Enviar Pedido</button>
         <h2 className="total-venta">Total: ${total}</h2>
-
       </div>
 
       <table>
@@ -241,7 +257,7 @@ export default function Venta() {
           {venta.map((item, index) => (
             <tr key={index}>
               <td data-label="Comida">{item.nombre}</td>
-              <td data-label="Precio">{"$"+ item.precio}</td>
+              <td data-label="Precio">{"$" + item.precio}</td>
               <td data-label="Cantidad">{item.cantidad}</td>
               <td data-label="Subtotal">{item.subtotal}</td>
               <td>
@@ -251,7 +267,6 @@ export default function Venta() {
           ))}
         </tbody>
       </table>
-
 
       {mostrarModal && (
         <div className="modal-overlay">
@@ -278,7 +293,7 @@ export default function Venta() {
                     Selecciona un cliente
                   </option>
                   {clientes.map((c) => (
-                    <option key={c.idcliente} value={c.idcliente}>
+                    <option key={c.id} value={c.id}>
                       {c.nombre}
                     </option>
                   ))}
@@ -339,7 +354,9 @@ export default function Venta() {
                   }
                   disabled={loading}
                 />
-                <button onClick={createClient}>Crear cliente</button>
+                <button onClick={createClient} disabled={loading}>
+                  {loading ? "Creando..." : "Crear cliente"}
+                </button>
               </div>
             )}
           </div>

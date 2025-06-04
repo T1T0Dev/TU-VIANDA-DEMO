@@ -1,4 +1,0 @@
-GET http://localhost/api/pedidos
-
-###
-GET http://localhost/api/clientes
